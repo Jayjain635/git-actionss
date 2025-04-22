@@ -1,0 +1,15 @@
+name: "Greeting"
+# on : 
+#     - push
+#     - workflow_dispatch
+on: [push,workflow_dispatch]
+jobs: 
+    greets:
+        runs-on : ubuntu-latest
+        #we need to send code to ubuntu (remote machine) for test
+        steps:
+            - name: Geting code...
+              run: | #'|' for multiple line 
+                echo "Cloning repo ...."
+                echo "${{toJson(github)}}"  #this is given by github ,not yaml code
+                git clone 'https://github.com/${{github.repository}}.git'  #this will give repositery address
