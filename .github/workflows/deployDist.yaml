@@ -15,9 +15,9 @@ jobs:
             #     echo "${{toJson(github)}}"  #github provide this syntax,not yaml code
                 # git clone https://github.com/${{github.repository}}.git'  #this will give repositery address
             - name: Installing Node
-              uses: actions/checkout@v2
-              with: 
-                node-version : 22
+              uses: actions/setup-node@v3
+              with:
+                node-version: '22'
             - name: Printing Node version
               run: node -v
             - name : Installing dependencies
