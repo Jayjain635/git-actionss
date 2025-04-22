@@ -9,7 +9,18 @@ jobs:
         #we need to send code to ubuntu (remote machine) for test
         steps:
             - name: Geting code...
-              run: | #'|' for multiple line 
-                echo "Cloning repo ...."
-                echo "${{toJson(github)}}"  #this is given by github ,not yaml code
-                git clone https://github.com/${{github.repository}}.git'  #this will give repositery address
+              uses: actions/checkout@v4 
+            #   run: | #'|' for multiple line 
+            #     echo "Cloning repo ...."
+            #     echo "${{toJson(github)}}"  #github provide this syntax,not yaml code
+                # git clone https://github.com/${{github.repository}}.git'  #this will give repositery address
+            - name: Installing Node
+              uses: actions/checkout@v2
+              with: 
+                node-version : 22
+            - name: Printing Node version
+              run: node -v
+            - name : Installing dependencies
+              run : npm ci #intead of npm i we use npm ci bcoz it will install the exact dependencies that are required from package-lock/json
+            - name: Run test cases
+              run: npm run test  
