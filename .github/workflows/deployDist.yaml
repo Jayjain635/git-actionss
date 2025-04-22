@@ -5,7 +5,21 @@ name: "Deploy Dist"
 # on :
 #     - push
 #     - workflow_dispatch
+
 on: [push, workflow_dispatch]
+# on: 
+#     push:
+#         #actions will execute only if we push in following branches
+#         branches:
+#             - main
+#             - 'example/**'
+#         #whenever  there is any change in following path located file no need to do any thing   
+#         paths-ignore:
+#             - README.md
+
+#     workflow_dispatch:        
+
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -24,7 +38,9 @@ jobs:
       - name: Printing Node version
         run: node -v
 
-      #Here we are installing similar dependency frequently like in deploy also we are installing node , so it will take more time to install , to resolve this isse we store it in cache which will store command ANd a key next time when similar command occurs it use cache memory , whenever we change package-lock.json dependency new key will generate
+      #Here we are installing similar dependency frequently like in deploy also we are installing node , so it will take more time to install , to resolve this isse we store it in cache which will store command ANd a key next time when similar command occurs it use cache memory , whenever we change package-lock.json(Here package-lock.json bcoz we use npm ci , ci leads to package-lock.json) dependency new key will generate
+      #if it will not found key it will generate new one
+      #first tiome it will take time to store data in cache but after that whenever we use ,it will load fastly
       - name: cache dependencies
         uses: actions/cache@v4
         with:
@@ -35,25 +51,40 @@ jobs:
         run: npm ci #intead of npm i we use npm ci bcoz it will install the exact dependencies that are required from package-lock/json
       - name: Run test cases
         run: npm run test
+  build:
+   needs: test #this will lead to run code in sequence that's first test will run then build will
+   runs-on: ubuntu-latest     
+   steps:
+     - name: Geting code...
+       uses: actions/checkout@v4
+     - name: Installing Node
+       uses: actions/setup-node@v3
+       with:
+         node-version: "22"
+     - name: cache dependencies
+       uses: actions/cache@v4
+       with:
+         path: ~/.npm
+         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+     - name: Installing dependencies
+       run: npm ci
+     - name: Build Project #(Artifact)whenever any files in generated in automation process for web app it will store in dist folder , for app apk is generated 
+       run: npm run build
+     #first we will upload artifact then we will download them in deploy
+     
+     - name: Upload Dist Artifact
+       uses: actions/upload-artifact@v4
+       with: 
+         name: dist-files
+         path: dist
   deploy:
-    needs: test #this will lead to run code in sequence that's first test will run then deploy will
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Geting code...
-        uses: actions/checkout@v4
-      - name: Installing Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "22"
-      - name: cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-
-      - name: Installing dependencies
-        run: npm ci
-      - name: Build Project
-        run: npm run build
       - name: Deploy
         run: echo "Deployed Project"
+      - name: Download Dist Artifact
+        uses: actions/download-artifact@v4
+        with: 
+          name: dist-files
+          path: dist 
